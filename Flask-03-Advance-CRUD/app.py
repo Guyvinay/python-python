@@ -1,4 +1,4 @@
-from flask import Flask, flash, request, redirect, render_template
+from flask import Flask, flash, jsonify, request, redirect, render_template
 from pymongo import MongoClient 
 from flask_pymongo import PyMongo
 from flask_bcrypt import Bcrypt
@@ -17,28 +17,57 @@ class User:
         self.password = password
 
 db = client['mydb']
+users_collection = db['users']
 
-@app.route('/register', methods=['GET','POST'])
+#WebService
+
+@app.route('/register', methods=['POST'])
 def register() :
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        password = request.form['password']
+    data = request.get_json()
+    name = data['name']
+    email = data['email']
+    password = data['password']
+
+    encoded_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    user = {
+        'name':name,
+        'email':email,
+        'password':password
+    }
+    users_collection.insert_one(user)
+    return jsonify(
+        {'message':'User Registration successful', 
+         'user':user
+                    }
+                    )
+
+
+#With Template 
+# @app.route('/register', methods=['GET','POST'])
+# def register() :
+#     if request.method == 'POST':
+#         name = request.form['name']
+#         email = request.form['email']
+#         password = request.form['password']
         
-        encoded_password = bcrypt.generate_password_hash(password).decode('utf-8')
+#         encoded_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-        user = {
-            'name':name,
-            'email':email,
-            'password':encoded_password
-        }
+#         user = {
+#             'name':name,
+#             'email':email,
+#             'password':encoded_password
+#         }
 
-        db.users.insert_one(user)
+#         db.users.insert_one(user)
 
-        # flash('Account has succesfully been created', 'success')
+#         # flash('Account has succesfully been created', 'success')
 
-        return redirect('/login')
-    return render_template('register.html')
+#         return redirect('/login')
+#     return render_template('register.html')
+
+
+
 
 # app.py
 
