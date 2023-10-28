@@ -9,3 +9,7 @@ Set Up a Virtual Environment: Create a virtual environment for your project to i
 Install Flask and Required Packages: Install Flask and additional packages you'll need for this project. You'll want Flask-SQLAlchemy for database management and a password hashing library (e.g., Flask-Bcrypt) for secure password storage.
 
 -> pip install Flask Flask-SQLAlchemy Flask-Bcrypt
+
+
+or Consider Using MongoDB
+-> pip install Flask-PyMongo
