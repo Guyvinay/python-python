@@ -17,7 +17,7 @@ class User:
         self.password = password
 
 db = client['mydb']
-users_collection = db['users']
+# users_collection = db['users']
 
 #WebService
 
@@ -33,13 +33,16 @@ def register() :
     user = {
         'name':name,
         'email':email,
-        'password':password
+        'password':encoded_password
     }
-    users_collection.insert_one(user)
+    persisted_user = db.users.insert_one(user)
+    # print(persisted_user.acknowledged)
     return jsonify(
         {'message':'User Registration successful', 
-         'user':user
-                    }
+         'user_id':str(persisted_user.inserted_id),
+         'Status':persisted_user.acknowledged,
+         'user':str(user)
+         }
                     )
 
 
@@ -71,10 +74,10 @@ def register() :
 
 # app.py
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    # Login logic goes here
-    return render_template('login.html')
+# @app.route('/login', methods=['GET', 'POST'])
+# def login():
+#     # Login logic goes here
+#     return render_template('login.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
