@@ -42,8 +42,30 @@ def register() :
          'user_id':str(persisted_user.inserted_id),
          'Status':persisted_user.acknowledged,
          'user':str(user)
-         }
-                    )
+         })
+
+#login endpoint
+
+@app.route('/login', methods=['POST'])
+def login() :
+    data = request.get_json()
+    email = data['email']
+    password = data['password']
+
+    user = db.users.find_one({'email':email})
+    if user and bcrypt.check_password_hash(user['password'],password) :
+        user_obj = User( user['name'], user['email'],user['password'])
+        print(user_obj)
+        return jsonify(
+            {
+                'message':'Login SuccessFul',
+                'user':str(user)
+            }
+        )
+    return jsonify({
+        'message':'Login Failed!'
+    })
+
 
 
 #With Template 
