@@ -1,0 +1,19 @@
+<!-- templates/profile.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Profile</title>
+</head>
+<body>
+    <h1>User Profile</h1>
+    {% if user_data %}
+        <p>Welcome, {{ user_data.username }}!</p>
+        <p>Email: {{ user_data.email }}</p>
+        <!-- Add more user profile information here -->
+    {% else %}
+        <p>You are not logged in.</p>
+    {% endif %}
+    <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+</html>

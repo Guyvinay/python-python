@@ -1,8 +1,9 @@
 from flask import Flask, flash, jsonify, request, redirect, render_template, url_for
-from flask_login import current_user, login_user
+from flask_login import current_user, login_required, login_user
 from pymongo import MongoClient 
 from flask_pymongo import PyMongo
 from flask_bcrypt import Bcrypt
+from flask_login import LoginManager
 
 app = Flask(__name__)
 app.config['MONGO_URI']='mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.10.6'
@@ -20,6 +21,7 @@ class User:
         self.name = name
         self.email = email
         self.password = password
+        self.is_active = True
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -48,7 +50,9 @@ def register():
         # return redirect(url_for('login'))
         return redirect(url_for('login'))
 
-    return render_template('login.html')
+    return render_template('register.html')
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -61,8 +65,8 @@ def login():
 
         if user and bcrypt.check_password_hash(user['password'], password):
             # Successful login
-            user_obj = User(username, user['email'], user['password'])
-            login_user(user_obj)  # Log in the user
+            # user_obj = User(username, user['email'], user['password'])
+            # login_user(user_obj)  # Log in the user
             return redirect(url_for('profile'))  # Redirect to user profile page
 
         # If login fails, show an error message
@@ -70,6 +74,20 @@ def login():
 
     # Always render the 'login.html' template, whether login is successful or not
     return render_template('login.html')
+
+
+# app.py
+
+@app.route('/profile')
+@login_required  # This decorator ensures that only authenticated users can access this route
+def profile():
+    # Fetch user profile data
+    user_data = {
+        'username': current_user.username,
+        'email': current_user.email,
+        # You can add more profile data as needed
+    }
+    return render_template('profile.html', user_data=user_data)
 
 # users_collection = db['users']
 
