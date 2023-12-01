@@ -201,7 +201,21 @@ def update_hiring_manager(id):
 def delete_hiring_manager(id):
     try:
         # hiring_managers.delete_many({'name':'Hiring Manager 12'})
-        result = hiring_managers.delete_one({'_id': ObjectId(id)})
+
+        hiring_manager = hiring_managers.find_one({'_id':ObjectId(id)})
+        
+
+        for manager in hiring_manager['job_postings'] :
+          print(manager)
+          job_postings.delete_one(
+              {'_id':ObjectId(manager)}
+          )
+
+
+        result = hiring_managers.delete_one(
+              {'_id':ObjectId(id)}
+          )
+
         if result.deleted_count > 0:
             return jsonify({'message': 'Hiring Manager deleted successfully'})
         else:
