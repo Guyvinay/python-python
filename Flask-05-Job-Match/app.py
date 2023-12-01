@@ -143,7 +143,9 @@ def get_hiring_managers():
         for manager in hiring_managers_list :
             manager['_id'] = str(manager['_id'])
 
-        return jsonify({'hiring_managers': hiring_managers_list})
+        return jsonify({
+            'hiring_managers': hiring_managers_list,
+            'total_hiring_managers':len(hiring_managers_list)})
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -154,7 +156,8 @@ def get_hiring_manager(id):
     try:
         hiring_manager = hiring_managers.find_one({'_id': ObjectId(id)})
         if hiring_manager:
-            return jsonify({'hiring_manager': str(hiring_manager)})
+            hiring_manager['_id'] = str(hiring_manager['_id'])
+            return jsonify({'hiring_manager': hiring_manager})
         else:
             return jsonify({'message': 'Hiring Manager not found'}), 404
     except Exception as e:
@@ -175,10 +178,8 @@ def add_hiring_manager():
 
         inserted_document['_id'] = str(inserted_document['_id'])
 
-        serialized_document = json_util.dumps(inserted_document)
-
-        # Return the serialized document as JSON directly
-        return jsonify({'hiring_manager':json_util.loads(serialized_document)})
+        
+        return jsonify({'hiring_manager':inserted_document})
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -199,6 +200,7 @@ def update_hiring_manager(id):
 @app.route('/hiring_managers/<id>', methods=['DELETE'])
 def delete_hiring_manager(id):
     try:
+        # hiring_managers.delete_many({'name':'Hiring Manager 12'})
         result = hiring_managers.delete_one({'_id': ObjectId(id)})
         if result.deleted_count > 0:
             return jsonify({'message': 'Hiring Manager deleted successfully'})
@@ -219,14 +221,23 @@ def delete_hiring_manager(id):
 @app.route('/job_postings', methods=['GET'])
 def get_job_postings():
     job_postings_list = list(job_postings.find())
-    return jsonify({'job_postings': str(job_postings_list)})
+    for posting in job_postings_list :
+        posting['_id'] = str(posting['_id'])
+
+    return jsonify({
+        'job_postings': job_postings_list,
+        'total_job_postings':len(job_postings_list)
+        })
 
 @app.route('/job_postings/<id>', methods=['GET'])
 def get_job_posting(id):
     try:
         job_posting = job_postings.find_one({'_id': ObjectId(id)})
         if job_posting:
-            return jsonify({'job_posting': str(job_posting)})
+
+            job_posting['_id']=str(job_posting['_id'])
+
+            return jsonify({'job_posting': job_posting})
         else:
             return jsonify({'message': 'Job Posting not found'}), 404
     except Exception as e:
@@ -244,8 +255,20 @@ def add_job_posting(hiring_manager_id):
                 'error':f'Hiring Manager with id: {hiring_manager_id} not found'
             })
         
+        
+
         data['hiring_manage_id'] = hiring_manager_id
         job_posting_id = job_postings.insert_one(data).inserted_id
+
+        hiring_manager['job_postings'].append(str(job_posting_id))
+
+        hiring_managers.update_one(
+            {
+            '_id' : ObjectId(hiring_manager['_id']),
+            },
+            {
+               '$set':hiring_manager
+            })
 
         return jsonify({'job_posting_id': str(job_posting_id)})
     
