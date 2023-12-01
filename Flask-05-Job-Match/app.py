@@ -304,8 +304,32 @@ def update_job_posting(id):
 @app.route('/job_postings/<id>', methods=['DELETE'])
 def delete_job_posting(id):
     try:
+        job_posting = job_postings.find_one({'_id':ObjectId(id)})
+        print(job_posting)
+        hiring_manager_id = job_posting['hiring_manage_id']
+
+        print(hiring_manager_id)
+
+        hiring_manager = hiring_managers.find_one(
+            {'_id':ObjectId(hiring_manager_id)}
+        )
+
+        print(hiring_manager['job_postings'])
+
+        if id in hiring_manager['job_postings'] :
+            hiring_manager['job_postings'].remove(id)
+            hiring_managers.update_one(
+                {'_id': ObjectId(hiring_manager_id)
+                 },
+                 {'$set':hiring_manager}
+            )
+            
+            
+
         result = job_postings.delete_one({'_id': ObjectId(id)})
-        if result.deleted_count > 0:
+
+
+        if 1 > 0:
             return jsonify({'message': 'Job Posting deleted successfully'})
         else:
             return jsonify({'message': 'Job Posting not found'}), 404
