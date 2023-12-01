@@ -1,4 +1,3 @@
-class Config : 
-    SECRET_KEY = 'asdfghjklpoiuytrewq'
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/jobmatching'
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+# config.py
+
+MONGO_URI = 'mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.10.6'
