@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 from config import MONGO_URI
 from pymongo import MongoClient
-from bson import ObjectId
+from bson import ObjectId, json_util
 
 #Job-Seeker-modal
 {
@@ -21,7 +21,19 @@ from bson import ObjectId
     "end_date":"2023-12-30"
 }
 
+class HiringManager:
+    def __init__(self, _id, name, email):
+        self._id = _id
+        self.name = name
+        self.email = email
 
+    def to_dict(self):
+        # Convert the instance variables to a dictionary
+        return {
+            '_id': str(self._id),  # Convert ObjectId to string
+            'name': self.name,
+            'email': self.email
+        }
 
 app = Flask(__name__)
 app.config['MONGO_URI'] = MONGO_URI
@@ -30,7 +42,8 @@ mongo = MongoClient(app.config['MONGO_URI'])
 #Creating database and modals
 job_seekers = mongo.job_machingdb.job_seekers
 job_postings = mongo.job_machingdb.job_postings
-
+hiring_managers = mongo.job_machingdb.hiring_managers
+applications = mongo.job_machingdb.applications
 #routes to initialze collections and add some data
 @app.route('/modal_init', methods=['GET'])
 def modal_init() :
@@ -119,6 +132,87 @@ def delete_job_seeker_by_id(job_seeker_id) :
         return jsonify({'error':str(exp)}), 500
 #Job_seekers completed
 
+#Hiring Managers  Inits here
+# API routes for Hiring Manager CRUD operations
+@app.route('/hiring_managers', methods=['GET'])
+def get_hiring_managers():
+
+    try:
+        hiring_managers_list = list(hiring_managers.find())
+        
+        for manager in hiring_managers_list :
+            manager['_id'] = str(manager['_id'])
+
+        return jsonify({'hiring_managers': hiring_managers_list})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API routes for Hiring Manager CRUD operations
+@app.route('/hiring_managers/<id>', methods=['GET'])
+def get_hiring_manager(id):
+    try:
+        hiring_manager = hiring_managers.find_one({'_id': ObjectId(id)})
+        if hiring_manager:
+            return jsonify({'hiring_manager': str(hiring_manager)})
+        else:
+            return jsonify({'message': 'Hiring Manager not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API routes for Hiring Manager CRUD operations
+@app.route('/hiring_managers', methods=['POST'])
+def add_hiring_manager():
+    try:
+        data = request.json
+        data['job_postings'] = list()
+
+        # Insert data into MongoDB
+        result = hiring_managers.insert_one(data)
+
+        # Fetch the inserted document from MongoDB using the inserted_id
+        inserted_document = hiring_managers.find_one({'_id': result.inserted_id})
+
+        inserted_document['_id'] = str(inserted_document['_id'])
+
+        serialized_document = json_util.dumps(inserted_document)
+
+        # Return the serialized document as JSON directly
+        return jsonify({'hiring_manager':json_util.loads(serialized_document)})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+# API routes for Hiring Manager CRUD operations
+@app.route('/hiring_managers/<id>', methods=['PUT'])
+def update_hiring_manager(id):
+    try:
+        data = request.json
+        result = hiring_managers.update_one({'_id': ObjectId(id)}, {'$set': data})
+        if result.modified_count > 0:
+            return jsonify({'message': 'Hiring Manager updated successfully'})
+        else:
+            return jsonify({'message': 'Hiring Manager not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API routes for Hiring Manager CRUD operations
+@app.route('/hiring_managers/<id>', methods=['DELETE'])
+def delete_hiring_manager(id):
+    try:
+        result = hiring_managers.delete_one({'_id': ObjectId(id)})
+        if result.deleted_count > 0:
+            return jsonify({'message': 'Hiring Manager deleted successfully'})
+        else:
+            return jsonify({'message': 'Hiring Manager not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+
+
+
 #Job_postings inits
 
 # API routes for Job Posting CRUD operations
@@ -138,12 +232,23 @@ def get_job_posting(id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/job_postings', methods=['POST'])
-def add_job_posting():
+@app.route('/job_postings/<hiring_manager_id>', methods=['POST'])
+def add_job_posting(hiring_manager_id):
     try:
         data = request.json
+
+        hiring_manager = hiring_managers.find_one({'_id':ObjectId(hiring_manager_id)})
+
+        if not hiring_manager :
+            return jsonify({
+                'error':f'Hiring Manager with id: {hiring_manager_id} not found'
+            })
+        
+        data['hiring_manage_id'] = hiring_manager_id
         job_posting_id = job_postings.insert_one(data).inserted_id
+
         return jsonify({'job_posting_id': str(job_posting_id)})
+    
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -169,7 +274,9 @@ def delete_job_posting(id):
             return jsonify({'message': 'Job Posting not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+#Job Posting endpoints done
 
+#Application ENdpoints Inits here
 
 
 
